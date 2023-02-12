@@ -6,7 +6,6 @@ import tasks.TaskService;
 
 import java.util.*;
 
-
 public class Main {
     private static final TaskService taskService = new TaskService();
     public static void main(String[] args) {
@@ -62,14 +61,12 @@ public class Main {
             System.out.println(e.getArgument());
         }
     }
-
     private static void printMenu() {
         System.out.println("Доступные команды: \n 1. Добавить задачу \n 2. Удалить задачу " +
                 "\n 3. Получить задачу на указанную дату \n 4. Показать список задач \n 5. Показать список удалённых задач " +
                 "\n 6. Изменить название задачи \n 7. Изменить описание задачи \n 8. Сгруппировать все задачи по дате " +
                 "\n 9. Найти задачу \n 0. Выход");
     }
-
     private static void add() throws IncorrectArgumentException {
         System.out.println("Пожалуйста, выберите периодичность задачи: ");
         for (TaskPeriodicity taskPeriodicity : TaskPeriodicity.values()) {
@@ -79,39 +76,31 @@ public class Main {
         var periodicity = TaskPeriodicity.valueOf(strPeriodicity);
         taskService.add(periodicity);
     }
-
     private static void remove() throws TaskNotFoundException {
         int id = InputUtils.askInt("Введите ID задачи которую хотите удалить");
         taskService.remove(id);
     }
-
     private static void getAllByDate() throws TaskNotFoundException {
         var date = InputUtils.askDate("Введите дату");
         taskService.getAllByDate(date);
     }
-
     private static void listTaskMap() {
         taskService.listTaskMap();
     }
-
     private static void listRemovedTasks() {
         taskService.listRemovedTasks();
     }
-
     private static void updateTitle() {
         var id = InputUtils.askInt("Пожалуйста, введите ID задачи, заголовок которой вы хотите обновить");
         taskService.updateTittle(id);
     }
-
     private static void updateDescription() {
         var id = InputUtils.askInt("Пожалуйста, введите ID задачи, описание которой вы хотите обновить");
         taskService.updateDescription(id);
     }
-
     private static void groupByDate() {
         taskService.groupByDate();
     }
-
     private static void findTask() {
         var substr = InputUtils.askString("Enter substring to find");
         taskService.findTask(substr);
