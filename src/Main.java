@@ -1,114 +1,119 @@
-import tasks.*;
+import enums.TaskPeriodicity;
+import exceptions.IncorrectArgumentException;
+import exceptions.TaskNotFoundException;
+import tasks.InputUtils;
+import tasks.TaskService;
 
-import java.lang.reflect.Type;
-import java.time.LocalDate;
-import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 
 public class Main {
+    private static final TaskService taskService = new TaskService();
     public static void main(String[] args) {
-
-        int optionGeneralMenu;
-
-        do {
-            System.out.println("********************************  \n" +
-                    "1 - Добвляем новую задачку  \n" +
-                    "2 - Получить план на день\n" +
-                    "3 - Удалить задачку \n" +
-                    "0 - Выйти из приложения");
-            System.out.print("Введите номер операции - ");
-            Scanner generalMenu = new Scanner(System.in);
-            optionGeneralMenu = generalMenu.nextInt();
-            if (optionGeneralMenu == 1) {
-
-                Type type = null;
-                String title = null;
-                String description = null;
-                LocalDateTime localDateTime = null;
-
-                System.out.println(
-                        "_______________ \n" +
-                                "1 - Рабочая задача  \n" +
-                                "2 - Личная задача");
-                System.out.print("Выбери тип задачи - ");
-                Scanner typeMenu = new Scanner(System.in);
-                int tm = typeMenu.nextInt();
-                switch (tm) {
-                    case 1:
-                        type = Type.WORK;
-                        break;
-                    case 2:
-                        type = Type.PERSONAL;
-                        break;
-                }
-
-                System.out.println("_______________ \n" +
-                        "Введите название задачи:");
-                Scanner titleMenu = new Scanner(System.in);
-                title = titleMenu.nextLine();
-
-                System.out.println("_______________ \n" +
-                        "Введите описание задачи:");
-                Scanner descriptionMenu = new Scanner(System.in);
-                description = descriptionMenu.nextLine();
-
-                System.out.print("_______________ \n" +
-                        "Введите дату в формате (ДД.ММ.ГГГГ чч:мм) - ");
-                Scanner dateMenu = new Scanner(System.in);
-                String dataM = dateMenu.nextLine();
-                DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
-                localDateTime = LocalDateTime.parse(dataM, dtf);
-                System.out.println("_______________ \n" +
-                        "0 - Однократная задача  \n" +
-                        "1 - Ежедневная задача  \n" +
-                        "2 - Еженедельная задача  \n" +
-                        "3 - Ежемесячная задача  \n" +
-                        "4 - Ежегодная задача");
-                System.out.print("Выберите периодичность задачи - ");
-                Scanner addMenu = new Scanner(System.in);
-                int addMenuOption = addMenu.nextInt();
-                switch (addMenuOption){
-                    case 0:
-                        TaskService.addTask(new OneTimeTask(type, title, description, localDateTime));
-                        break;
-                    case 1:
-                        TaskService.addTask(new DailyTask(type, title, description, localDateTime));
-                        break;
-                    case 2:
-                        TaskService.addTask(new WeeklyTask(type, title, description, localDateTime));
-                        break;
-                    case 3:
-                        TaskService.addTask(new MonthlyTask(type, title, description, localDateTime));
-                        break;
-                    case 4:
-                        TaskService.addTask(new YearlyTask(type, title, description, localDateTime));
-                        break;
+        try (Scanner scanner = new Scanner(System.in)) {
+            label:
+            while (true) {
+                printMenu();
+                System.out.println("Пожалуйста выберите команду: ");
+                if (scanner.hasNextInt()) {
+                    int menu = scanner.nextInt();
+                    switch (menu) {
+                        case 1:
+                            add();
+                            break;
+                        case 2:
+                            remove();
+                            break;
+                        case 3:
+                            getAllByDate();
+                            break;
+                        case 4:
+                            listTaskMap();
+                            break;
+                        case 5:
+                            listRemovedTasks();
+                            break;
+                        case 6:
+                            updateTitle();
+                            break;
+                        case 7:
+                            updateDescription();
+                            break;
+                        case 8:
+                            groupByDate();
+                            break;
+                        case 9:
+                            findTask();
+                            break;
+                        case 0:
+                            break label;
+                        default:
+                            System.out.println("Неизвестный пункт меню");
+                    }
+                } else {
+                    scanner.next();
+                    System.out.println("Пожалуйста, выберите пункт меню из списка!");
                 }
             }
+            System.out.println("Good bye!");
+        } catch (TaskNotFoundException e) {
+            System.out.println(e.getMessage());
+        } catch (IncorrectArgumentException e) {
+            System.out.println(e.getArgument());
+        }
+    }
 
-            if (optionGeneralMenu == 2) {
-                System.out.print("Введите дату в формате (ДД.ММ.ГГГГ) - ");
-                Scanner getTaskMenu = new Scanner(System.in);
-                String gtMenu = getTaskMenu.nextLine();
-                DateTimeFormatter gtm = DateTimeFormatter.ofPattern("dd.MM.yyyy");
-                LocalDate taskDate = LocalDate.parse(gtMenu, gtm);
-                for (Task task : TaskService.getAllByDate(taskDate)) {
-                    System.out.println(task);
-                }
-            }
+    private static void printMenu() {
+        System.out.println("Доступные команды: \n 1. Добавить задачу \n 2. Удалить задачу " +
+                "\n 3. Получить задачу на указанную дату \n 4. Показать список задач \n 5. Показать список удалённых задач " +
+                "\n 6. Изменить название задачи \n 7. Изменить описание задачи \n 8. Сгруппировать все задачи по дате " +
+                "\n 9. Найти задачу \n 0. Выход");
+    }
 
-            if (optionGeneralMenu == 3) {
-                System.out.print("Введите ID задачи - ");
-                Scanner removeTaskById = new Scanner(System.in);
-                Integer idTask = removeTaskById.nextInt();
-                TaskService.removed(idTask);
-            }
-        } while (optionGeneralMenu != 0);
+    private static void add() throws IncorrectArgumentException {
+        System.out.println("Пожалуйста, выберите периодичность задачи: ");
+        for (TaskPeriodicity taskPeriodicity : TaskPeriodicity.values()) {
+            System.out.println(taskPeriodicity);
+        }
+        var strPeriodicity = InputUtils.askString("Your selection").toUpperCase();
+        var periodicity = TaskPeriodicity.valueOf(strPeriodicity);
+        taskService.add(periodicity);
+    }
 
+    private static void remove() throws TaskNotFoundException {
+        int id = InputUtils.askInt("Введите ID задачи которую хотите удалить");
+        taskService.remove(id);
+    }
 
+    private static void getAllByDate() throws TaskNotFoundException {
+        var date = InputUtils.askDate("Введите дату");
+        taskService.getAllByDate(date);
+    }
 
+    private static void listTaskMap() {
+        taskService.listTaskMap();
+    }
+
+    private static void listRemovedTasks() {
+        taskService.listRemovedTasks();
+    }
+
+    private static void updateTitle() {
+        var id = InputUtils.askInt("Пожалуйста, введите ID задачи, заголовок которой вы хотите обновить");
+        taskService.updateTittle(id);
+    }
+
+    private static void updateDescription() {
+        var id = InputUtils.askInt("Пожалуйста, введите ID задачи, описание которой вы хотите обновить");
+        taskService.updateDescription(id);
+    }
+
+    private static void groupByDate() {
+        taskService.groupByDate();
+    }
+
+    private static void findTask() {
+        var substr = InputUtils.askString("Enter substring to find");
+        taskService.findTask(substr);
     }
 }
